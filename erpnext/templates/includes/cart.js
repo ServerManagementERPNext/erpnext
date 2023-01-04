@@ -292,7 +292,7 @@ $.extend(shopping_cart, {
 });
 
 frappe.ready(function() {
-	$(".cart-icon").hide();
+//	$(".cart-icon").hide();
 	shopping_cart.parent = $(".cart-container");
 	shopping_cart.bind_events();
 });
