@@ -382,6 +382,7 @@ class Subscription(Document):
 		# for that reason
 		items_list = self.get_items_from_plans(self.plans, prorate)
 		for item in items_list:
+			item["deployment_name"] = self.deployment_name
 			item["cost_center"] = self.cost_center
 			invoice.append("items", item)
 
