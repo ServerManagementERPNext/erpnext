@@ -98,6 +98,7 @@ frappe.ready(() => {
 	$('.btn-new-address').click(() => {
 		const d = new frappe.ui.Dialog({
 			title: __('New Address'),
+			size: "large",
 			fields: [
 				{
 					label: __('Address Title'),
@@ -123,6 +124,11 @@ frappe.ready(() => {
 					reqd: 1
 				},
 				{
+					fieldname: "column_break0",
+					fieldtype: "Column Break",
+					width: "50%"
+				},
+				{
 					label: __('State'),
 					fieldname: 'state',
 					fieldtype: 'Data'
@@ -136,11 +142,6 @@ frappe.ready(() => {
 					reqd: 1
 				},
 				{
-					fieldname: "column_break0",
-					fieldtype: "Column Break",
-					width: "50%"
-				},
-				{
 					label: __('Address Type'),
 					fieldname: 'address_type',
 					fieldtype: 'Select',
@@ -148,7 +149,8 @@ frappe.ready(() => {
 						'Billing',
 						'Shipping'
 					],
-					reqd: 1
+					default: 'Billing',
+					hidden: 1
 				},
 				{
 					label: __('Postal Code'),
