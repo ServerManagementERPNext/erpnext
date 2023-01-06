@@ -508,6 +508,7 @@ def get_party(user=None):
 			ORDER BY c.creation
 			LIMIT 1
 		""", user, as_dict=1)
+		contact_details = contact_details[0] if contact_details else None
 
 	cart_settings = frappe.get_doc("E Commerce Settings")
 
