@@ -94,7 +94,7 @@ def place_order():
 		frappe.defaults.set_user_default("company", quotation.company)
 
 	if not (quotation.shipping_address_name or quotation.customer_address):
-		frappe.throw(_("Set Shipping Address or Billing Address"))
+		frappe.throw(_("Set Billing Address"))
 
 	from erpnext.selling.doctype.quotation.quotation import _make_sales_order
 
@@ -484,14 +484,30 @@ def get_party(user=None):
 	if not user:
 		user = frappe.session.user
 
-	contact_name = get_contact_name(user)
+	party_doctype = None
 	party = None
 
-	if contact_name:
-		contact = frappe.get_doc("Contact", contact_name)
-		if contact.links:
-			party_doctype = contact.links[0].link_doctype
-			party = contact.links[0].link_name
+	contact_details = frappe.db.sql("""
+		SELECT c.name, dlc.link_doctype, dlc.link_name
+		FROM `tabContact` c
+		INNER JOIN `tabDynamic Link` dlc ON c.name = dlc.parent
+		WHERE c.user = %s AND dlc.link_doctype = 'Customer' and ifnull(dlc.link_name, '') != ''
+		ORDER BY dlc.idx
+		LIMIT 1
+	""", user, as_dict=1)
+	contact_details = contact_details[0] if contact_details else None
+
+	if contact_details:
+		party_doctype = contact_details.link_doctype
+		party = contact_details.link_name
+	else:
+		contact_details = frappe.db.sql("""
+			SELECT c.name
+			FROM `tabContact` c
+			WHERE c.user = %s
+			ORDER BY c.creation
+			LIMIT 1
+		""", user, as_dict=1)
 
 	cart_settings = frappe.get_doc("E Commerce Settings")
 
@@ -500,7 +516,7 @@ def get_party(user=None):
 	if cart_settings.enable_checkout:
 		debtors_account = get_debtors_account(cart_settings)
 
-	if party:
+	if party_doctype and party:
 		return frappe.get_doc(party_doctype, party)
 
 	else:
@@ -524,11 +540,19 @@ def get_party(user=None):
 		customer.flags.ignore_mandatory = True
 		customer.insert(ignore_permissions=True)
 
-		contact = frappe.new_doc("Contact")
-		contact.update({"first_name": fullname, "email_ids": [{"email_id": user, "is_primary": 1}]})
+		if contact_details:
+			contact = frappe.get_doc("Contact", contact_details.name)
+		else:
+			contact = frappe.new_doc("Contact")
+			contact.update({
+				"first_name": fullname,
+				"email_ids": [{"email_id": user, "is_primary": 1}],
+				"user": user
+			})
+
 		contact.append("links", dict(link_doctype="Customer", link_name=customer.name))
 		contact.flags.ignore_mandatory = True
-		contact.insert(ignore_permissions=True)
+		contact.save(ignore_permissions=True)
 
 		return customer
 
