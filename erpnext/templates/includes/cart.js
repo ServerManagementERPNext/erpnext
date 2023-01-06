@@ -111,7 +111,8 @@ $.extend(shopping_cart, {
 		// bind update button
 		$(".cart-items").on("change", ".cart-qty", function() {
 			var item_code = $(this).attr("data-item-code");
-			var newVal = $(this).val();
+			var newVal = cint($(this).val());
+			newVal = shopping_cart.validate_cart_qty(newVal, this);
 			shopping_cart.shopping_cart_update({item_code, qty: newVal});
 		});
 
@@ -129,6 +130,7 @@ $.extend(shopping_cart, {
 				}
 			}
 			input.val(newVal);
+			newVal = shopping_cart.validate_cart_qty(newVal);
 
 			let notes = input.closest("td").siblings().find(".notes").text().trim();
 			var item_code = input.attr("data-item-code");
@@ -197,6 +199,21 @@ $.extend(shopping_cart, {
 				shopping_cart.apply_shipping_rule($(this).val(), this);
 			});
 		}
+	},
+
+	validate_cart_qty: function(qty) {
+		if (qty < 0) {
+			qty = qty * -1;
+		}
+		else if (qty == 0) {
+			qty = 1;
+		}
+		if (qty > 10) {
+			frappe.msgprint(__("Cart limit is 10"));
+			qty = 10;
+		}
+		$(this).val(qty);
+		return qty
 	},
 
 	apply_shipping_rule: function(rule, btn) {
