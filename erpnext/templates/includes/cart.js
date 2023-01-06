@@ -239,7 +239,6 @@ $.extend(shopping_cart, {
 			btn: btn,
 			callback: function(r) {
 				if(r.exc) {
-					shopping_cart.unfreeze();
 					var msg = "";
 					if(r._server_messages) {
 						msg = JSON.parse(r._server_messages || []).join("<br>");
@@ -253,6 +252,9 @@ $.extend(shopping_cart, {
 					$(btn).hide();
 					window.location.href = '/orders/' + encodeURIComponent(r.message);
 				}
+			},
+			always: function() {
+				shopping_cart.unfreeze();
 			}
 		});
 	},
