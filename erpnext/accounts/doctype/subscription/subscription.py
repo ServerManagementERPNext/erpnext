@@ -463,6 +463,7 @@ class Subscription(Document):
 						plan.plan, plan.qty, party, self.current_invoice_start, self.current_invoice_end
 					),
 					"cost_center": plan_doc.cost_center,
+					"uom": plan_doc.billing_interval
 				}
 			else:
 				item = {
@@ -477,6 +478,7 @@ class Subscription(Document):
 						prorate_factor,
 					),
 					"cost_center": plan_doc.cost_center,
+					"uom": plan_doc.billing_interval
 				}
 
 			if deferred:
