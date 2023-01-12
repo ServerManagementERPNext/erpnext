@@ -456,26 +456,25 @@ class Subscription(Document):
 			deferred = frappe.db.get_value("Item", item_code, deferred_field)
 
 			if not prorate:
+				rate = get_plan_rate(
+						plan.plan, plan.qty, party, self.current_invoice_start, self.current_invoice_end
+				)
 				item = {
 					"item_code": item_code,
 					"qty": plan.qty,
-					"rate": get_plan_rate(
-						plan.plan, plan.qty, party, self.current_invoice_start, self.current_invoice_end
-					),
+					"rate": rate,
+					"price_list_rate": rate,
 					"cost_center": plan_doc.cost_center,
 				}
 			else:
+				rate = get_plan_rate(
+						plan.plan, plan.qty, party, self.current_invoice_start, self.current_invoice_end
+				)
 				item = {
 					"item_code": item_code,
 					"qty": plan.qty,
-					"rate": get_plan_rate(
-						plan.plan,
-						plan.qty,
-						party,
-						self.current_invoice_start,
-						self.current_invoice_end,
-						prorate_factor,
-					),
+					"rate": rate,
+					"price_list_rate": rate,
 					"cost_center": plan_doc.cost_center,
 				}
 
