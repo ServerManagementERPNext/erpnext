@@ -447,6 +447,7 @@ class Subscription(Document):
 			plan_doc = frappe.get_doc("Subscription Plan", plan.plan)
 
 			item_code = plan_doc.item
+			uom = plan_doc.billing_interval
 
 			if self.party == "Customer":
 				deferred_field = "enable_deferred_revenue"
@@ -462,6 +463,7 @@ class Subscription(Document):
 				item = {
 					"item_code": item_code,
 					"qty": plan.qty,
+					"uom": uom,
 					"rate": rate,
 					"price_list_rate": rate,
 					"cost_center": plan_doc.cost_center,
@@ -473,6 +475,7 @@ class Subscription(Document):
 				item = {
 					"item_code": item_code,
 					"qty": plan.qty,
+					"uom": uom,
 					"rate": rate,
 					"price_list_rate": rate,
 					"cost_center": plan_doc.cost_center,
