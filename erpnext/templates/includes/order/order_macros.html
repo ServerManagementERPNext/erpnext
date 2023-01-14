@@ -1,6 +1,6 @@
 {% from "erpnext/templates/includes/macros.html" import product_image %}
 
-{% macro item_name_and_description(d) %}
+{% macro item_name_and_description(d, doc=None) %}
 	<div class="row item_name_and_description">
 		<div class="col-xs-4 col-sm-2 order-image-col">
 			<div class="order-image">
@@ -14,11 +14,28 @@
 			</div>
 		</div>
 		<div class="col-xs-8 col-sm-10">
-			{{ d.item_code }}
-			<div class="text-muted small item-description">
+			<strong>{{ d.item_code }}</strong>
+			<div class="small item-description">
 				{{ html2text(d.description) | truncate(140) }}
-				<br>
-				{{ d.deployment_name }}
+
+				{% if d.deployment_name %}
+				<div class="mt-2">
+					{% if doc %}
+					{% set sales_order = doc.name if doc.doctype == "Sales Order" else d.sales_order %}
+					{% set sales_order_item = d.name if doc.doctype == "Sales Order" else d.so_detail %}
+					{% endif %}
+					{% if sales_order and sales_order_item %}
+						{% set deployment = frappe.db.get_value("Deployment", {
+							"sales_order": sales_order, "sales_order_item": sales_order_item
+						}) %}
+						{% if deployment %}
+						<a href="/deployments/{{ deployment }}" target="_blank">Deployment: {{ d.deployment_name }}</a>
+						{% else %}
+						Deployment: {{ d.deployment_name }}
+						{% endif %}
+					{% endif %}
+				</div>
+				{% endif %}
 			</div>
 		</div>
 	</div>
