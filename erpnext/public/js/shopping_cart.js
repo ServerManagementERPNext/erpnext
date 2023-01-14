@@ -75,7 +75,7 @@ $.extend(shopping_cart, {
 	},
 
 	update_cart: function(opts) {
-		if (frappe.session.user==="Guest") {
+		if (frappe.session.user === "Guest") {
 			if (localStorage) {
 				localStorage.setItem("last_visited", window.location.pathname);
 			}
@@ -90,14 +90,16 @@ $.extend(shopping_cart, {
 				args: {
 					item_code: opts.item_code,
 					qty: opts.qty,
+					uom: opts.uom,
+					deployment_name: opts.deployment_name,
 					additional_notes: opts.additional_notes !== undefined ? opts.additional_notes : undefined,
 					with_items: opts.with_items || 0
 				},
 				btn: opts.btn,
-				callback: function(r) {
+				callback: function (r) {
 					shopping_cart.unfreeze();
 					shopping_cart.set_cart_count(true);
-					if(opts.callback)
+					if (opts.callback)
 						opts.callback(r);
 				}
 			});
@@ -151,10 +153,12 @@ $.extend(shopping_cart, {
 		}
 	},
 
-	shopping_cart_update: function({item_code, qty, cart_dropdown, additional_notes}) {
+	shopping_cart_update: function({item_code, qty, uom, deployment_name, cart_dropdown, additional_notes}) {
 		shopping_cart.update_cart({
 			item_code,
 			qty,
+			uom,
+			deployment_name,
 			additional_notes,
 			with_items: 1,
 			btn: this,

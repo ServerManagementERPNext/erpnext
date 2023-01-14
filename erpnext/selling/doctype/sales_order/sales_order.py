@@ -469,17 +469,13 @@ class SalesOrder(SellingController):
 
 	def set_indicator(self):
 		"""Set indicator for portal"""
-		if self.per_billed < 100 and self.per_delivered < 100:
+		if self.per_billed < 100:
 			self.indicator_color = "orange"
-			self.indicator_title = _("Not Paid and Not Delivered")
-
-		elif self.per_billed == 100 and self.per_delivered < 100:
-			self.indicator_color = "orange"
-			self.indicator_title = _("Paid and Not Delivered")
+			self.indicator_title = _("Pending")
 
 		else:
 			self.indicator_color = "green"
-			self.indicator_title = _("Paid")
+			self.indicator_title = _("Billed")
 
 	@frappe.whitelist()
 	def get_work_order_items(self, for_raw_material_request=0):

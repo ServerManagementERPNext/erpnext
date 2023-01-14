@@ -138,20 +138,31 @@ def request_for_quotation():
 
 
 @frappe.whitelist()
-def update_cart(item_code, qty, additional_notes=None, with_items=False):
-	quotation = _get_cart_quotation()
+def update_cart(item_code, qty, uom=None, deployment_name=None, additional_notes=None, with_items=False):
+	def item_match_condition(d):
+		return d.item_code == item_code\
+			and d.uom == uom\
+			and cstr(d.deployment_name) == cstr(deployment_name)
 
+	# Default UOM
+	if not uom:
+		uom = frappe.get_cached_value("Item", item_code, "sales_uom")\
+			or frappe.get_cached_value("Item", item_code, "stock_uom")
+
+	quotation = _get_cart_quotation()
 	empty_card = False
 	qty = flt(qty)
 	if qty == 0:
-		quotation_items = quotation.get("items", {"item_code": ["!=", item_code]})
+		quotation_items = [d for d in quotation.items if not item_match_condition(d)]
+
 		if quotation_items:
 			quotation.set("items", quotation_items)
 		else:
 			empty_card = True
 
 	else:
-		quotation_items = quotation.get("items", {"item_code": item_code})
+		quotation_items = [d for d in quotation.items if item_match_condition(d)]
+
 		if not quotation_items:
 			quotation.append(
 				"items",
@@ -160,11 +171,16 @@ def update_cart(item_code, qty, additional_notes=None, with_items=False):
 					"item_code": item_code,
 					"qty": qty,
 					"additional_notes": additional_notes,
+					"deployment_name": deployment_name,
+					"uom": uom
 				},
 			)
 		else:
 			quotation_items[0].qty = qty
 			quotation_items[0].additional_notes = additional_notes
+			quotation_items[0].deployment_name = deployment_name
+			if uom:
+				quotation_items[0].uom = uom
 
 	apply_cart_settings(quotation=quotation)
 

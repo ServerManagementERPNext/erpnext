@@ -5,7 +5,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import date_diff, flt, get_first_day, get_last_day, getdate
+from frappe.utils import date_diff, flt, get_first_day, get_last_day, getdate, cint
 
 from erpnext.utilities.product import get_price
 
@@ -15,7 +15,7 @@ class SubscriptionPlan(Document):
 		self.validate_interval_count()
 
 	def validate_interval_count(self):
-		if self.billing_interval_count < 1:
+		if cint(self.billing_interval_count) < 1:
 			frappe.throw(_("Billing Interval Count cannot be less than 1"))
 
 
