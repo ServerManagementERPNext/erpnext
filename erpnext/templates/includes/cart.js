@@ -111,8 +111,12 @@ $.extend(shopping_cart, {
 		// bind update button
 		$(".cart-items").on("change", ".cart-qty", function() {
 			var item_code = $(this).attr("data-item-code");
-			var newVal = $(this).val();
-			shopping_cart.shopping_cart_update({item_code, qty: newVal});
+			var newVal = cint($(this).val());
+			var uom = $(this).attr("data-uom");
+			var deployment_name = $(this).attr("data-deployment-name");
+
+			newVal = shopping_cart.validate_cart_qty(newVal, this);
+			shopping_cart.shopping_cart_update({item_code, qty: newVal, uom: uom, deployment_name: deployment_name});
 		});
 
 		$(".cart-items").on('click', '.number-spinner button', function () {
@@ -129,12 +133,17 @@ $.extend(shopping_cart, {
 				}
 			}
 			input.val(newVal);
+			newVal = shopping_cart.validate_cart_qty(newVal);
 
 			let notes = input.closest("td").siblings().find(".notes").text().trim();
 			var item_code = input.attr("data-item-code");
+			var uom = input.attr("data-uom");
+			var deployment_name = input.attr("data-deployment-name");
 			shopping_cart.shopping_cart_update({
 				item_code,
 				qty: newVal,
+				uom,
+				deployment_name,
 				additional_notes: notes
 			});
 		});
@@ -145,10 +154,14 @@ $.extend(shopping_cart, {
 			const $textarea = $(this);
 			const item_code = $textarea.attr('data-item-code');
 			const qty = $textarea.closest('tr').find('.cart-qty').val();
+			const uom = $(this).attr("data-uom");
+			const deployment_name = $(this).attr("data-deployment-name");
 			const notes = $textarea.val();
 			shopping_cart.shopping_cart_update({
 				item_code,
 				qty,
+				uom,
+				deployment_name,
 				additional_notes: notes
 			});
 		});
@@ -158,10 +171,13 @@ $.extend(shopping_cart, {
 		$(".cart-items").on("click", ".remove-cart-item", (e) => {
 			const $remove_cart_item_btn = $(e.currentTarget);
 			var item_code = $remove_cart_item_btn.data("item-code");
-
+			var uom = $(this).attr("data-uom");
+			var deployment_name = $(this).attr("data-deployment-name");
 			shopping_cart.shopping_cart_update({
 				item_code: item_code,
-				qty: 0
+				qty: 0,
+				uom,
+				deployment_name
 			});
 		});
 	},
@@ -199,6 +215,21 @@ $.extend(shopping_cart, {
 		}
 	},
 
+	validate_cart_qty: function(qty) {
+		if (qty < 0) {
+			qty = qty * -1;
+		}
+		else if (qty == 0) {
+			qty = 1;
+		}
+		if (qty > 10) {
+			frappe.msgprint(__("Cart limit is 10"));
+			qty = 10;
+		}
+		$(this).val(qty);
+		return qty
+	},
+
 	apply_shipping_rule: function(rule, btn) {
 		return frappe.call({
 			btn: btn,
@@ -222,7 +253,6 @@ $.extend(shopping_cart, {
 			btn: btn,
 			callback: function(r) {
 				if(r.exc) {
-					shopping_cart.unfreeze();
 					var msg = "";
 					if(r._server_messages) {
 						msg = JSON.parse(r._server_messages || []).join("<br>");
@@ -236,6 +266,9 @@ $.extend(shopping_cart, {
 					$(btn).hide();
 					window.location.href = '/orders/' + encodeURIComponent(r.message);
 				}
+			},
+			always: function() {
+				shopping_cart.unfreeze();
 			}
 		});
 	},
