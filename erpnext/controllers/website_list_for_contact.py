@@ -244,7 +244,7 @@ def get_customers_suppliers(doctype, user):
 			from
 				`tabContact`, `tabDynamic Link`
 			where
-				`tabContact`.name=`tabDynamic Link`.parent and `tabContact`.email_id =%s
+				`tabContact`.name=`tabDynamic Link`.parent and `tabContact`.user = %s
 			""",
 			user,
 			as_dict=1,

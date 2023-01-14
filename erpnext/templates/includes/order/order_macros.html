@@ -17,6 +17,8 @@
 			{{ d.item_code }}
 			<div class="text-muted small item-description">
 				{{ html2text(d.description) | truncate(140) }}
+				<br>
+				{{ d.deployment_name }}
 			</div>
 		</div>
 	</div>
