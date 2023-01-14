@@ -70,6 +70,8 @@
 					</span>
 				<input class="form-control text-center cart-qty" value="{{ d.get_formatted('qty') }}"
 						data-item-code="{{ d.item_code }}"
+						data-uom="{{ d.uom }}"
+						data-deployment-name="{{ d.deployment_name or '' }}"
 					   style="max-width: 70px;" {{ disabled }}>
 				<span class="input-group-append d-sm-inline-block">
 						<button class="btn cart-btn" data-dir="up" {{ disabled }}>
