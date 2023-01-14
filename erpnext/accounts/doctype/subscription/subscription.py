@@ -378,12 +378,24 @@ class Subscription(Document):
 			if self.get(dimension):
 				invoice.update({dimension: self.get(dimension)})
 
+		# this is the first invoice of this subscription
+		sales_order_data = []
+		if not self.get("invoices"):
+			sales_order_data = frappe.get_all('Deployment', fields=["sales_order", "sales_order_item"],
+				filters={'name': self.deployment, "sales_order": ["is", "set"], "sales_order_item": ["is", "set"]}
+			)
+
 		# Subscription is better suited for service items. I won't update `update_stock`
 		# for that reason
 		items_list = self.get_items_from_plans(self.plans, prorate)
 		for item in items_list:
 			item["deployment_name"] = self.deployment_name
 			item["cost_center"] = self.cost_center
+			if sales_order_data:
+				sales_order_data = sales_order_data[0]
+				item["sales_order"] = sales_order_data.sales_order
+				item["so_detail"] = sales_order_data.sales_order_item
+
 			invoice.append("items", item)
 
 		# Taxes
@@ -447,6 +459,7 @@ class Subscription(Document):
 			plan_doc = frappe.get_doc("Subscription Plan", plan.plan)
 
 			item_code = plan_doc.item
+			uom = plan_doc.billing_interval
 
 			if self.party == "Customer":
 				deferred_field = "enable_deferred_revenue"
@@ -462,6 +475,7 @@ class Subscription(Document):
 				item = {
 					"item_code": item_code,
 					"qty": plan.qty,
+					"uom": uom,
 					"rate": rate,
 					"price_list_rate": rate,
 					"cost_center": plan_doc.cost_center,
@@ -473,6 +487,7 @@ class Subscription(Document):
 				item = {
 					"item_code": item_code,
 					"qty": plan.qty,
+					"uom": uom,
 					"rate": rate,
 					"price_list_rate": rate,
 					"cost_center": plan_doc.cost_center,
