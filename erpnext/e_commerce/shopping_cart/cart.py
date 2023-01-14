@@ -94,7 +94,7 @@ def place_order():
 		frappe.defaults.set_user_default("company", quotation.company)
 
 	if not (quotation.shipping_address_name or quotation.customer_address):
-		frappe.throw(_("Set Shipping Address or Billing Address"))
+		frappe.throw(_("Set Billing Address"))
 
 	from erpnext.selling.doctype.quotation.quotation import _make_sales_order
 
@@ -138,20 +138,31 @@ def request_for_quotation():
 
 
 @frappe.whitelist()
-def update_cart(item_code, qty, additional_notes=None, with_items=False):
-	quotation = _get_cart_quotation()
+def update_cart(item_code, qty, uom=None, deployment_name=None, additional_notes=None, with_items=False):
+	def item_match_condition(d):
+		return d.item_code == item_code\
+			and d.uom == uom\
+			and cstr(d.deployment_name) == cstr(deployment_name)
 
+	# Default UOM
+	if not uom:
+		uom = frappe.get_cached_value("Item", item_code, "sales_uom")\
+			or frappe.get_cached_value("Item", item_code, "stock_uom")
+
+	quotation = _get_cart_quotation()
 	empty_card = False
 	qty = flt(qty)
 	if qty == 0:
-		quotation_items = quotation.get("items", {"item_code": ["!=", item_code]})
+		quotation_items = [d for d in quotation.items if not item_match_condition(d)]
+
 		if quotation_items:
 			quotation.set("items", quotation_items)
 		else:
 			empty_card = True
 
 	else:
-		quotation_items = quotation.get("items", {"item_code": item_code})
+		quotation_items = [d for d in quotation.items if item_match_condition(d)]
+
 		if not quotation_items:
 			quotation.append(
 				"items",
@@ -160,11 +171,16 @@ def update_cart(item_code, qty, additional_notes=None, with_items=False):
 					"item_code": item_code,
 					"qty": qty,
 					"additional_notes": additional_notes,
+					"deployment_name": deployment_name,
+					"uom": uom
 				},
 			)
 		else:
 			quotation_items[0].qty = qty
 			quotation_items[0].additional_notes = additional_notes
+			quotation_items[0].deployment_name = deployment_name
+			if uom:
+				quotation_items[0].uom = uom
 
 	apply_cart_settings(quotation=quotation)
 
@@ -484,14 +500,31 @@ def get_party(user=None):
 	if not user:
 		user = frappe.session.user
 
-	contact_name = get_contact_name(user)
+	party_doctype = None
 	party = None
 
-	if contact_name:
-		contact = frappe.get_doc("Contact", contact_name)
-		if contact.links:
-			party_doctype = contact.links[0].link_doctype
-			party = contact.links[0].link_name
+	contact_details = frappe.db.sql("""
+		SELECT c.name, dlc.link_doctype, dlc.link_name
+		FROM `tabContact` c
+		INNER JOIN `tabDynamic Link` dlc ON c.name = dlc.parent
+		WHERE c.user = %s AND dlc.link_doctype = 'Customer' and ifnull(dlc.link_name, '') != ''
+		ORDER BY dlc.idx
+		LIMIT 1
+	""", user, as_dict=1)
+	contact_details = contact_details[0] if contact_details else None
+
+	if contact_details:
+		party_doctype = contact_details.link_doctype
+		party = contact_details.link_name
+	else:
+		contact_details = frappe.db.sql("""
+			SELECT c.name
+			FROM `tabContact` c
+			WHERE c.user = %s
+			ORDER BY c.creation
+			LIMIT 1
+		""", user, as_dict=1)
+		contact_details = contact_details[0] if contact_details else None
 
 	cart_settings = frappe.get_doc("E Commerce Settings")
 
@@ -500,7 +533,7 @@ def get_party(user=None):
 	if cart_settings.enable_checkout:
 		debtors_account = get_debtors_account(cart_settings)
 
-	if party:
+	if party_doctype and party:
 		return frappe.get_doc(party_doctype, party)
 
 	else:
@@ -524,11 +557,19 @@ def get_party(user=None):
 		customer.flags.ignore_mandatory = True
 		customer.insert(ignore_permissions=True)
 
-		contact = frappe.new_doc("Contact")
-		contact.update({"first_name": fullname, "email_ids": [{"email_id": user, "is_primary": 1}]})
+		if contact_details:
+			contact = frappe.get_doc("Contact", contact_details.name)
+		else:
+			contact = frappe.new_doc("Contact")
+			contact.update({
+				"first_name": fullname,
+				"email_ids": [{"email_id": user, "is_primary": 1}],
+				"user": user
+			})
+
 		contact.append("links", dict(link_doctype="Customer", link_name=customer.name))
 		contact.flags.ignore_mandatory = True
-		contact.insert(ignore_permissions=True)
+		contact.save(ignore_permissions=True)
 
 		return customer
 
