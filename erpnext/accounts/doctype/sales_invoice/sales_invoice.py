@@ -88,6 +88,9 @@ class SalesInvoice(SellingController):
 		elif cint(self.is_return) == 1:
 			self.indicator_title = _("Return")
 			self.indicator_color = "gray"
+		elif self.docstatus == 2:
+			self.indicator_title = _("Cancelled")
+			self.indicator_color = "darkgrey"
 		else:
 			self.indicator_color = "green"
 			self.indicator_title = _("Paid")
