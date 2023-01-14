@@ -56,6 +56,9 @@ def get_context(context):
 	# show Make Purchase Invoice button based on permission
 	context.show_make_pi_button = frappe.has_permission("Purchase Invoice", "create")
 
+	for d in context.doc.get("items"):
+		set_image_from_item(d)
+
 
 def get_attachments(dt, dn):
 	return frappe.get_all(
@@ -63,3 +66,28 @@ def get_attachments(dt, dn):
 		fields=["name", "file_name", "file_url", "is_private"],
 		filters={"attached_to_name": dn, "attached_to_doctype": dt, "is_private": 0},
 	)
+
+
+def set_image_from_item(doc):
+	variant_item_code = doc.item_code
+	template_item_code = frappe.get_cached_value("Item", variant_item_code, 'variant_of')
+
+	doc.image = get_image_from_website_item(variant_item_code) or get_image_from_website_item(template_item_code)
+	if doc.image:
+		return
+
+	doc.image = frappe.get_cached_value("Item", variant_item_code, "image")
+	if doc.image:
+		return
+
+	if template_item_code:
+		doc.image = frappe.get_cached_value("Item", template_item_code, "image")
+
+
+def get_image_from_website_item(item_code):
+	if not item_code:
+		return None
+
+	website_item = frappe.db.get_value("Website Item", {"item_code": item_code}, ["thumbnail", "image"], as_dict=True)
+	if website_item:
+		return website_item.get("thumbnail") or website_item.get("image")
