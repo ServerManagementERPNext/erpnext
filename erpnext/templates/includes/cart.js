@@ -171,8 +171,8 @@ $.extend(shopping_cart, {
 		$(".cart-items").on("click", ".remove-cart-item", (e) => {
 			const $remove_cart_item_btn = $(e.currentTarget);
 			var item_code = $remove_cart_item_btn.data("item-code");
-			var uom = $(this).attr("data-uom");
-			var deployment_name = $(this).attr("data-deployment-name");
+			var uom = $remove_cart_item_btn.attr("data-uom");
+			var deployment_name = $remove_cart_item_btn.attr("data-deployment-name");
 			shopping_cart.shopping_cart_update({
 				item_code: item_code,
 				qty: 0,
