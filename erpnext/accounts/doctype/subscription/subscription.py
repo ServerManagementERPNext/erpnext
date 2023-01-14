@@ -459,7 +459,6 @@ class Subscription(Document):
 			plan_doc = frappe.get_doc("Subscription Plan", plan.plan)
 
 			item_code = plan_doc.item
-			uom = plan_doc.billing_interval
 
 			if self.party == "Customer":
 				deferred_field = "enable_deferred_revenue"
@@ -468,30 +467,26 @@ class Subscription(Document):
 
 			deferred = frappe.db.get_value("Item", item_code, deferred_field)
 
+			item = {
+				"item_code": item_code,
+				"qty": plan_doc.billing_interval_count * plan.qty,
+				"uom": plan_doc.billing_interval,
+				"cost_center": plan_doc.cost_center,
+			}
+
 			if not prorate:
 				rate = get_plan_rate(
-						plan.plan, plan.qty, party, self.current_invoice_start, self.current_invoice_end
+					plan.plan, plan.qty, party, self.current_invoice_start, self.current_invoice_end
 				)
-				item = {
-					"item_code": item_code,
-					"qty": plan.qty,
-					"uom": uom,
-					"rate": rate,
-					"price_list_rate": rate,
-					"cost_center": plan_doc.cost_center,
-				}
+				item["rate"] = rate
 			else:
 				rate = get_plan_rate(
-						plan.plan, plan.qty, party, self.current_invoice_start, self.current_invoice_end
+					plan.plan, plan.qty, party, self.current_invoice_start, self.current_invoice_end
 				)
-				item = {
-					"item_code": item_code,
-					"qty": plan.qty,
-					"uom": uom,
-					"rate": rate,
-					"price_list_rate": rate,
-					"cost_center": plan_doc.cost_center,
-				}
+				item["rate"] = rate
+
+			item["rate"] /= plan_doc.billing_interval_count
+			item["price_list_rate"] = item["rate"]
 
 			if deferred:
 				item.update(
