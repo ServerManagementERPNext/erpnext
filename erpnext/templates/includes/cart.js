@@ -25,7 +25,7 @@ $.extend(shopping_cart, {
 
 	bind_address_picker_dialog: function() {
 		const d = this.get_update_address_dialog();
-		this.parent.find('.btn-change-address').on('click', (e) => {
+		$(shopping_cart.parent).on("click", ".btn-change-address", (e) => {
 			const type = $(e.currentTarget).parents('.address-container').attr('data-address-type');
 			$(d.get_field('address_picker').wrapper).html(
 				this.get_address_template(type)
@@ -96,13 +96,13 @@ $.extend(shopping_cart, {
 	},
 
 	bind_place_order: function() {
-		$(".btn-place-order").on("click", function() {
+		$(shopping_cart.parent).on("click", ".btn-place-order", function() {
 			shopping_cart.place_order(this);
 		});
 	},
 
 	bind_request_quotation: function() {
-		$('.btn-request-for-quotation').on('click', function() {
+		$(shopping_cart.parent).on("click", ".btn-request-for-quotation", function() {
 			shopping_cart.request_quotation(this);
 		});
 	},
@@ -150,12 +150,12 @@ $.extend(shopping_cart, {
 	},
 
 	bind_change_notes: function() {
-		$('.cart-items').on('change', 'textarea', function() {
+		$('.cart-items').on('change', '.cart-item-notes', function() {
 			const $textarea = $(this);
 			const item_code = $textarea.attr('data-item-code');
 			const qty = $textarea.closest('tr').find('.cart-qty').val();
-			const uom = $(this).attr("data-uom");
-			const deployment_name = $(this).attr("data-deployment-name");
+			const uom = $textarea.attr("data-uom");
+			const deployment_name = $textarea.attr("data-deployment-name");
 			const notes = $textarea.val();
 			shopping_cart.shopping_cart_update({
 				item_code,
@@ -301,7 +301,7 @@ $.extend(shopping_cart, {
 	},
 
 	bind_coupon_code: function() {
-		$(".bt-coupon").on("click", function() {
+		$(shopping_cart.parent).on("click", ".bt-coupon", function() {
 			shopping_cart.apply_coupon_code(this);
 		});
 	},

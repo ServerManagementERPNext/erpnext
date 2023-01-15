@@ -50,10 +50,10 @@
 				<span></span>
 				{% endif %}
 				<div class="mt-2 notes">
-						<textarea data-item-code="{{d.item_code}}" class="form-control w-100" rows="2"
-								  placeholder="{{ _('Add notes') }}">
-							{{d.additional_notes or ''}}
-						</textarea>
+						<textarea class="form-control w-100 cart-item-notes" rows="2" placeholder="{{ _('Add notes') }}"
+								data-item-code="{{d.item_code}}"
+								data-uom="{{ d.uom }}"
+								data-deployment-name="{{ d.deployment_name or '' }}">{{d.additional_notes or ''}}</textarea>
 				</div>
 			</div>
 		</div>
