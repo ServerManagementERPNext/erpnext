@@ -115,9 +115,17 @@ $.extend(shopping_cart, {
 			var newVal = cint($(this).val());
 			var uom = $(this).attr("data-uom");
 			var deployment_name = $(this).attr("data-deployment-name");
+			var notes = $(this).attr("data-notes").trim();
 
-			newVal = shopping_cart.validate_cart_qty(newVal, this);
-			shopping_cart.shopping_cart_update({item_code, qty: newVal, uom: uom, deployment_name: deployment_name});
+			newVal = shopping_cart.validate_cart_qty(newVal);
+			$(this).val(newVal);
+			shopping_cart.shopping_cart_update({
+				item_code,
+				qty: newVal,
+				uom,
+				deployment_name,
+				additional_notes: notes
+			});
 		});
 
 		$(".cart-items").on('click', '.number-spinner button', function () {
@@ -133,10 +141,10 @@ $.extend(shopping_cart, {
 					newVal = parseInt(oldValue) - 1;
 				}
 			}
-			input.val(newVal);
 			newVal = shopping_cart.validate_cart_qty(newVal);
+			input.val(newVal);
 
-			let notes = input.closest("td").siblings().find(".notes").text().trim();
+			var notes = input.attr("data-notes").trim();
 			var item_code = input.attr("data-item-code");
 			var uom = input.attr("data-uom");
 			var deployment_name = input.attr("data-deployment-name");
@@ -255,7 +263,6 @@ $.extend(shopping_cart, {
 			frappe.msgprint(__("Cart limit is 10"));
 			qty = 10;
 		}
-		$(this).val(qty);
 		return qty
 	},
 
