@@ -20,6 +20,7 @@ $.extend(shopping_cart, {
 		shopping_cart.bind_change_qty();
 		shopping_cart.bind_remove_cart_item();
 		shopping_cart.bind_change_notes();
+		shopping_cart.bind_change_deployment_name();
 		shopping_cart.bind_coupon_code();
 	},
 
@@ -164,6 +165,34 @@ $.extend(shopping_cart, {
 				deployment_name,
 				additional_notes: notes
 			});
+		});
+	},
+
+	bind_change_deployment_name: function() {
+		$('.cart-items').on('change', '.cart-deployment-name', function() {
+
+			const $deployment_name_input = $(this);
+
+			const item_code = $deployment_name_input.attr('data-item-code');
+			const qty = $deployment_name_input.closest('tr').find('.cart-qty').val();
+			const uom = $deployment_name_input.attr("data-uom");
+			const deployment_name = $deployment_name_input.val();
+			const notes = $deployment_name_input.attr("data-notes");
+
+			console.log(item_code);
+			console.log(qty);
+			console.log(uom);
+			console.log(deployment_name);
+			console.log(notes);
+
+			shopping_cart.shopping_cart_update({
+				item_code,
+				qty,
+				uom,
+				deployment_name,
+				additional_notes: notes
+			});
+
 		});
 	},
 

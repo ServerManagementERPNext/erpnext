@@ -141,8 +141,7 @@ def request_for_quotation():
 def update_cart(item_code, qty, uom=None, deployment_name=None, additional_notes=None, with_items=False):
 	def item_match_condition(d):
 		return d.item_code == item_code\
-			and d.uom == uom\
-			and cstr(d.deployment_name) == cstr(deployment_name)
+			and d.uom == uom
 
 	# Default UOM
 	if not uom:
