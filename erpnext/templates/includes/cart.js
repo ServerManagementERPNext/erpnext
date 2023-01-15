@@ -180,21 +180,35 @@ $.extend(shopping_cart, {
 		$('.cart-items').on('change', '.cart-deployment-name', function() {
 
 			const $deployment_name_input = $(this);
+			const row_name = $deployment_name_input.closest('tr').attr('data-name');
+			const old_deployment_name = $deployment_name_input.attr('data-deployment-name');
+			const deployment_name = $deployment_name_input.val().trim();
+			if (!deployment_name && old_deployment_name) {
+				$deployment_name_input.val(old_deployment_name);
+				frappe.throw(__('Deployment Name is mandatory'))
+			}
 
-			const item_code = $deployment_name_input.attr('data-item-code');
-			const qty = $deployment_name_input.closest('tr').find('.cart-qty').val();
-			const uom = $deployment_name_input.attr("data-uom");
-			const deployment_name = $deployment_name_input.val();
-			const notes = $deployment_name_input.attr("data-notes");
+			if (old_deployment_name != deployment_name) {
+				shopping_cart.freeze();
+				frappe.call({
+					type: "POST",
+					method: "erpnext.e_commerce.shopping_cart.cart.update_card_deployment_name",
+					args: {
+						row_name,
+						deployment_name
+					},
+					callback: function (r) {
+						console.log(r)
 
-			shopping_cart.shopping_cart_update({
-				item_code,
-				qty,
-				uom,
-				deployment_name,
-				additional_notes: notes
-			});
-
+						if(!r.exc) {
+							$(".cart-items").html(r.message.items);
+						}
+					},
+					always: function() {
+						shopping_cart.unfreeze();
+					}
+				});
+			}
 		});
 	},
 

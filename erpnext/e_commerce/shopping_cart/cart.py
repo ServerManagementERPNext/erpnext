@@ -141,7 +141,8 @@ def request_for_quotation():
 def update_cart(item_code, qty, uom=None, deployment_name=None, additional_notes=None, with_items=False):
 	def item_match_condition(d):
 		return d.item_code == item_code\
-			and d.uom == uom
+			and d.uom == uom\
+			and cstr(d.deployment_name) == cstr(deployment_name)
 
 	# Default UOM
 	if not uom:
@@ -204,6 +205,26 @@ def update_cart(item_code, qty, uom=None, deployment_name=None, additional_notes
 		}
 	else:
 		return {"name": quotation.name}
+
+
+@frappe.whitelist()
+def update_card_deployment_name(row_name, deployment_name):
+	quotation = _get_cart_quotation()
+	deployment_name_changed = False
+	if quotation.items:
+		for d in quotation.items:
+			if d.name == row_name and d.deployment_name != deployment_name:
+				d.deployment_name = deployment_name
+				deployment_name_changed = True
+				break
+		if deployment_name_changed:
+			quotation.flags.ignore_permissions = True
+			quotation.save()
+			context = get_cart_quotation(quotation)
+
+			return {
+				"items": frappe.render_template("templates/includes/cart/cart_items.html", context),
+			}
 
 
 @frappe.whitelist()
