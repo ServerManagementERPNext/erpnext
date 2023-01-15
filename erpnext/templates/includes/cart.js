@@ -187,12 +187,6 @@ $.extend(shopping_cart, {
 			const deployment_name = $deployment_name_input.val();
 			const notes = $deployment_name_input.attr("data-notes");
 
-			console.log(item_code);
-			console.log(qty);
-			console.log(uom);
-			console.log(deployment_name);
-			console.log(notes);
-
 			shopping_cart.shopping_cart_update({
 				item_code,
 				qty,
