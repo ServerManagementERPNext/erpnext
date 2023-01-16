@@ -47,10 +47,15 @@
 
 				<div class="deployment-heading mt-2">
 					<h3>Deployment Name</h3>
-					<div class="col">{{ d.deployment_name }}</div>
+					<input class="form-control cart-deployment-name" value="{{ d.deployment_name }}"
+						   data-item-code="{{d.item_code}}"
+						   data-uom="{{ d.uom }}"
+						   data-notes="{{ d.additional_notes or '' }}"
+						   data-deployment-name="{{ d.deployment_name or '' }}"
+					>
 				</div>
 
-				<div class="mt-2 notes">
+				<div class="mt-2 notes hidden">
 					<h3>Notes</h3>
 					<textarea class="form-control w-100 cart-item-notes" rows="2" placeholder="{{ _('Add notes') }}"
 							data-item-code="{{d.item_code}}"
@@ -75,6 +80,7 @@
 						data-item-code="{{ d.item_code }}"
 						data-uom="{{ d.uom }}"
 						data-deployment-name="{{ d.deployment_name or '' }}"
+						data-notes="{{ d.additional_notes or '' }}"
 					   style="max-width: 70px;" {{ disabled }}>
 				<span class="input-group-append d-sm-inline-block">
 						<button class="btn cart-btn" data-dir="up" {{ disabled }}>

@@ -20,6 +20,7 @@ $.extend(shopping_cart, {
 		shopping_cart.bind_change_qty();
 		shopping_cart.bind_remove_cart_item();
 		shopping_cart.bind_change_notes();
+		shopping_cart.bind_change_deployment_name();
 		shopping_cart.bind_coupon_code();
 	},
 
@@ -114,9 +115,17 @@ $.extend(shopping_cart, {
 			var newVal = cint($(this).val());
 			var uom = $(this).attr("data-uom");
 			var deployment_name = $(this).attr("data-deployment-name");
+			var notes = $(this).attr("data-notes").trim();
 
-			newVal = shopping_cart.validate_cart_qty(newVal, this);
-			shopping_cart.shopping_cart_update({item_code, qty: newVal, uom: uom, deployment_name: deployment_name});
+			newVal = shopping_cart.validate_cart_qty(newVal);
+			$(this).val(newVal);
+			shopping_cart.shopping_cart_update({
+				item_code,
+				qty: newVal,
+				uom,
+				deployment_name,
+				additional_notes: notes
+			});
 		});
 
 		$(".cart-items").on('click', '.number-spinner button', function () {
@@ -132,10 +141,10 @@ $.extend(shopping_cart, {
 					newVal = parseInt(oldValue) - 1;
 				}
 			}
-			input.val(newVal);
 			newVal = shopping_cart.validate_cart_qty(newVal);
+			input.val(newVal);
 
-			let notes = input.closest("td").siblings().find(".notes").text().trim();
+			var notes = input.attr("data-notes").trim();
 			var item_code = input.attr("data-item-code");
 			var uom = input.attr("data-uom");
 			var deployment_name = input.attr("data-deployment-name");
@@ -164,6 +173,40 @@ $.extend(shopping_cart, {
 				deployment_name,
 				additional_notes: notes
 			});
+		});
+	},
+
+	bind_change_deployment_name: function() {
+		$('.cart-items').on('change', '.cart-deployment-name', function() {
+
+			const $deployment_name_input = $(this);
+			const row_name = $deployment_name_input.closest('tr').attr('data-name');
+			const old_deployment_name = $deployment_name_input.attr('data-deployment-name');
+			const deployment_name = $deployment_name_input.val().trim();
+			if (!deployment_name && old_deployment_name) {
+				$deployment_name_input.val(old_deployment_name);
+				frappe.throw(__('Deployment Name is mandatory'))
+			}
+
+			if (old_deployment_name != deployment_name) {
+				shopping_cart.freeze();
+				frappe.call({
+					type: "POST",
+					method: "erpnext.e_commerce.shopping_cart.cart.update_cart_deployment_name",
+					args: {
+						row_name,
+						deployment_name
+					},
+					callback: function (r) {
+						if(!r.exc) {
+							$(".cart-items").html(r.message.items);
+						}
+					},
+					always: function() {
+						shopping_cart.unfreeze();
+					}
+				});
+			}
 		});
 	},
 
@@ -226,7 +269,6 @@ $.extend(shopping_cart, {
 			frappe.msgprint(__("Cart limit is 10"));
 			qty = 10;
 		}
-		$(this).val(qty);
 		return qty
 	},
 

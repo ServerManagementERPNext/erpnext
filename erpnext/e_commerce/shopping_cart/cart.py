@@ -150,7 +150,7 @@ def update_cart(item_code, qty, uom=None, deployment_name=None, additional_notes
 			or frappe.get_cached_value("Item", item_code, "stock_uom")
 
 	quotation = _get_cart_quotation()
-	empty_card = False
+	empty_cart = False
 	qty = flt(qty)
 	if qty == 0:
 		quotation_items = [d for d in quotation.items if not item_match_condition(d)]
@@ -158,7 +158,7 @@ def update_cart(item_code, qty, uom=None, deployment_name=None, additional_notes
 		if quotation_items:
 			quotation.set("items", quotation_items)
 		else:
-			empty_card = True
+			empty_cart = True
 
 	else:
 		quotation_items = [d for d in quotation.items if item_match_condition(d)]
@@ -186,7 +186,7 @@ def update_cart(item_code, qty, uom=None, deployment_name=None, additional_notes
 
 	quotation.flags.ignore_permissions = True
 	quotation.payment_schedule = []
-	if not empty_card:
+	if not empty_cart:
 		quotation.save()
 	else:
 		quotation.delete()
@@ -205,6 +205,26 @@ def update_cart(item_code, qty, uom=None, deployment_name=None, additional_notes
 		}
 	else:
 		return {"name": quotation.name}
+
+
+@frappe.whitelist()
+def update_cart_deployment_nameupdate_cart_deployment_name(row_name, deployment_name):
+	quotation = _get_cart_quotation()
+	deployment_name_changed = False
+	if quotation.items:
+		for d in quotation.items:
+			if d.name == row_name and d.deployment_name != deployment_name:
+				d.deployment_name = deployment_name
+				deployment_name_changed = True
+				break
+		if deployment_name_changed:
+			quotation.flags.ignore_permissions = True
+			quotation.save()
+			context = get_cart_quotation(quotation)
+
+			return {
+				"items": frappe.render_template("templates/includes/cart/cart_items.html", context),
+			}
 
 
 @frappe.whitelist()
