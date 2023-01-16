@@ -192,14 +192,12 @@ $.extend(shopping_cart, {
 				shopping_cart.freeze();
 				frappe.call({
 					type: "POST",
-					method: "erpnext.e_commerce.shopping_cart.cart.update_card_deployment_name",
+					method: "erpnext.e_commerce.shopping_cart.cart.update_cart_deployment_name",
 					args: {
 						row_name,
 						deployment_name
 					},
 					callback: function (r) {
-						console.log(r)
-
 						if(!r.exc) {
 							$(".cart-items").html(r.message.items);
 						}

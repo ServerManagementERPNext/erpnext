@@ -150,7 +150,7 @@ def update_cart(item_code, qty, uom=None, deployment_name=None, additional_notes
 			or frappe.get_cached_value("Item", item_code, "stock_uom")
 
 	quotation = _get_cart_quotation()
-	empty_card = False
+	empty_cart = False
 	qty = flt(qty)
 	if qty == 0:
 		quotation_items = [d for d in quotation.items if not item_match_condition(d)]
@@ -158,7 +158,7 @@ def update_cart(item_code, qty, uom=None, deployment_name=None, additional_notes
 		if quotation_items:
 			quotation.set("items", quotation_items)
 		else:
-			empty_card = True
+			empty_cart = True
 
 	else:
 		quotation_items = [d for d in quotation.items if item_match_condition(d)]
@@ -186,7 +186,7 @@ def update_cart(item_code, qty, uom=None, deployment_name=None, additional_notes
 
 	quotation.flags.ignore_permissions = True
 	quotation.payment_schedule = []
-	if not empty_card:
+	if not empty_cart:
 		quotation.save()
 	else:
 		quotation.delete()
@@ -208,7 +208,7 @@ def update_cart(item_code, qty, uom=None, deployment_name=None, additional_notes
 
 
 @frappe.whitelist()
-def update_card_deployment_name(row_name, deployment_name):
+def update_cart_deployment_nameupdate_cart_deployment_name(row_name, deployment_name):
 	quotation = _get_cart_quotation()
 	deployment_name_changed = False
 	if quotation.items:
