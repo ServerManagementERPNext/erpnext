@@ -20,7 +20,7 @@
  "is_standard": 1,
  "login_required": 1,
  "max_attachment_size": 0,
- "modified": "2022-09-23 13:17:18.529784",
+ "modified": "2023-01-31 16:08:55.997716",
  "modified_by": "Administrator",
  "module": "Support",
  "name": "issues",
@@ -81,7 +81,7 @@
    "label": "Status",
    "max_length": 0,
    "max_value": 0,
-   "options": "Open\nReplied\nHold\nClosed",
+   "options": "Open\nReplied\nOn Hold\nResolved\nClosed",
    "read_only": 1,
    "reqd": 0,
    "show_in_filter": 1
