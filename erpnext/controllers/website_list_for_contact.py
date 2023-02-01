@@ -112,6 +112,13 @@ def get_transaction_list(
 			ignore_permissions = False
 			filters = []
 
+	if frappe.get_meta(doctype).has_field("transaction_date"):
+		date_field = "transaction_date"
+	elif frappe.get_meta(doctype).has_field("posting_date"):
+		date_field = "posting_date"
+	else:
+		date_field = "creation"
+
 	transactions = get_list_for_transactions(
 		doctype,
 		txt,
@@ -120,7 +127,7 @@ def get_transaction_list(
 		limit_page_length,
 		fields="name",
 		ignore_permissions=ignore_permissions,
-		order_by="modified desc",
+		order_by="{0} desc, creation desc".format(date_field),
 	)
 
 	if custom:
@@ -154,7 +161,7 @@ def get_list_for_transactions(
 		limit_start=limit_start,
 		limit_page_length=limit_page_length,
 		ignore_permissions=ignore_permissions,
-		order_by="modified desc",
+		order_by=order_by,
 	):
 		data.append(d)
 
