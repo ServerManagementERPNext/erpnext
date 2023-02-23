@@ -5,7 +5,8 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import date_diff, flt, get_first_day, get_last_day, getdate, cint
+from frappe.utils import date_diff, flt, get_first_day, get_last_day, getdate, cint, add_days
+from dateutil.relativedelta import relativedelta
 
 from erpnext.utilities.product import get_price
 
@@ -49,25 +50,19 @@ def get_plan_rate(
 		start_date = getdate(start_date)
 		end_date = getdate(end_date)
 
-		no_of_months = (end_date.year - start_date.year) * 12 + (end_date.month - start_date.month) + 1
+		rd = relativedelta(add_days(end_date, 1), start_date)
+		no_of_months = rd.months + rd.years * 12
+		no_of_days = rd.days
+
 		cost = plan.cost * no_of_months
 
 		# Adjust cost if start or end date is not month start or end
 		prorate = frappe.db.get_single_value("Subscription Settings", "prorate")
+		if prorate and no_of_days:
+			days_in_start_month = date_diff(get_last_day(start_date), get_first_day(start_date)) + 1
+			days_in_end_month = date_diff(get_last_day(start_date), get_first_day(start_date)) + 1
+			avg_days_in_month = (days_in_start_month + days_in_end_month) / 2
 
-		if prorate:
-			prorate_factor = flt(
-				date_diff(start_date, get_first_day(start_date))
-				/ date_diff(get_last_day(start_date), get_first_day(start_date)),
-				1,
-			)
-
-			prorate_factor += flt(
-				date_diff(get_last_day(end_date), end_date)
-				/ date_diff(get_last_day(end_date), get_first_day(end_date)),
-				1,
-			)
-
-			cost -= plan.cost * prorate_factor
+			cost += plan.cost * no_of_days / avg_days_in_month
 
 		return cost
