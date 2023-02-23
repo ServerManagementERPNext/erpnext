@@ -30,6 +30,7 @@ class Subscription(Document):
 	def before_insert(self):
 		# update start just before the subscription doc is created
 		self.update_subscription_period(self.start_date)
+		self.set_subscription_status()
 
 	def update_subscription_period(self, date=None, return_date=False):
 		"""
@@ -198,20 +199,26 @@ class Subscription(Document):
 		"""
 		Sets the status of the `Subscription`
 		"""
+
+		subscription_settings = frappe.get_single("Subscription Settings")
+
 		if self.is_trialling():
 			self.status = "Trialling"
+
 		elif self.status == "Active" and self.end_date and getdate() > getdate(self.end_date):
 			self.status = "Completed"
-		elif self.is_past_grace_period():
-			subscription_settings = frappe.get_single("Subscription Settings")
-			self.status = "Cancelled" if cint(subscription_settings.cancel_after_grace) else "Unpaid"
-		elif self.current_invoice_is_past_due() and not self.is_past_grace_period():
+
+		elif self.is_past_grace_period() and cint(subscription_settings.cancel_after_grace):
+			self.status = "Cancelled"
+
+		elif self.has_overdue_invoice():
 			self.status = "Past Due Date"
-		elif not self.has_outstanding_invoice():
+
+		elif self.has_outstanding_invoice():
+			self.status = "Unpaid"
+
+		else:
 			self.status = "Active"
-		elif self.is_new_subscription():
-			self.status = "Active"
-		self.save()
 
 	def is_trialling(self):
 		"""
@@ -235,14 +242,14 @@ class Subscription(Document):
 		"""
 		Returns `True` if the grace period for the `Subscription` has passed
 		"""
-		current_invoice = self.get_current_invoice()
-		if self.current_invoice_is_past_due(current_invoice):
+		overdue_invoice = self.get_overdue_invoice()
+		if overdue_invoice and self.invoice_is_past_due(overdue_invoice):
 			subscription_settings = frappe.get_single("Subscription Settings")
 			grace_period = cint(subscription_settings.grace_period)
 
-			return getdate() > add_days(current_invoice.due_date, grace_period)
+			return getdate() > add_days(overdue_invoice.due_date, grace_period)
 
-	def current_invoice_is_past_due(self, current_invoice=None):
+	def invoice_is_past_due(self, current_invoice=None):
 		"""
 		Returns `True` if the current generated invoice is overdue
 		"""
@@ -267,6 +274,13 @@ class Subscription(Document):
 				return doc
 			else:
 				frappe.throw(_("Invoice {0} no longer exists").format(current.get("invoice")))
+
+	def get_overdue_invoice(self):
+		doctype = "Sales Invoice" if self.party_type == "Customer" else "Purchase Invoice"
+
+		name = self.has_overdue_invoice()
+		if name:
+			return frappe.get_doc(doctype, name)
 
 	def is_new_subscription(self):
 		"""
@@ -315,10 +329,6 @@ class Subscription(Document):
 				frappe.throw(
 					_("Billing Interval in Subscription Plan must be Month to follow calendar months")
 				)
-
-	def after_insert(self):
-		# todo: deal with users who collect prepayments. Maybe a new Subscription Invoice doctype?
-		self.set_subscription_status()
 
 	def generate_invoice(self, prorate=0):
 		"""
@@ -631,17 +641,34 @@ class Subscription(Document):
 		Returns `True` if the most recent invoice for the `Subscription` is not paid
 		"""
 		doctype = "Sales Invoice" if self.party_type == "Customer" else "Purchase Invoice"
-		current_invoice = self.get_current_invoice()
-		invoice_list = [d.invoice for d in self.invoices]
 
-		outstanding_invoices = frappe.get_all(
-			doctype, fields=["name"], filters={"status": ("!=", "Paid"), "name": ("in", invoice_list)}
-		)
+		invoice_list = [d.invoice for d in self.invoices]
+		outstanding_invoices = frappe.get_all(doctype, fields=["name"], filters={
+			"outstanding_amount": (">", 0),
+			"docstatus": 1,
+			"name": ("in", invoice_list)
+		}, order_by="posting_date")
 
 		if outstanding_invoices:
-			return True
+			return outstanding_invoices[0].name
 		else:
-			False
+			return False
+
+	def has_overdue_invoice(self):
+		doctype = "Sales Invoice" if self.party_type == "Customer" else "Purchase Invoice"
+
+		invoice_list = [d.invoice for d in self.invoices]
+		overdue_invoices = frappe.get_all(doctype, fields=["name"], filters={
+			"outstanding_amount": (">", 0),
+			"due_date": ("<", getdate()),
+			"docstatus": 1,
+			"name": ("in", invoice_list)
+		}, order_by="due_date")
+
+		if overdue_invoices:
+			return overdue_invoices[0].name
+		else:
+			return False
 
 	def cancel_subscription(self):
 		"""
