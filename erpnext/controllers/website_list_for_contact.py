@@ -83,7 +83,7 @@ def get_transaction_list(
 	else:
 		filters.append((doctype, "docstatus", "=", 1))
 
-	if (user != "Guest" and is_website_user()) or doctype == "Request for Quotation":
+	if True or (user != "Guest" and is_website_user()) or doctype == "Request for Quotation":
 		parties_doctype = (
 			"Request for Quotation Supplier" if doctype == "Request for Quotation" else doctype
 		)
