@@ -208,7 +208,7 @@ def update_cart(item_code, qty, uom=None, deployment_name=None, additional_notes
 
 
 @frappe.whitelist()
-def update_cart_deployment_nameupdate_cart_deployment_name(row_name, deployment_name):
+def update_cart_deployment_name(row_name, deployment_name):
 	quotation = _get_cart_quotation()
 	deployment_name_changed = False
 	if quotation.items:

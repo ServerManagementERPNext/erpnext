@@ -78,7 +78,7 @@ def qty_from_all_warehouses(batch_info):
 	return qty
 
 
-def get_price(item_code, price_list, customer_group, company, qty=1):
+def get_price(item_code, price_list, customer_group, company, qty=1, uom=None):
 	from erpnext.e_commerce.shopping_cart.cart import get_party
 
 	template_item_code = frappe.db.get_value("Item", item_code, "variant_of")
@@ -88,6 +88,7 @@ def get_price(item_code, price_list, customer_group, company, qty=1):
 			"Item Price",
 			fields=["price_list_rate", "currency"],
 			filters={"price_list": price_list, "item_code": item_code},
+			order_by="ifnull(valid_from, '2000-01-01') desc"
 		)
 
 		if template_item_code and not price:
@@ -153,17 +154,24 @@ def get_price(item_code, price_list, customer_group, company, qty=1):
 					or ""
 				)
 
+				uom_field = 'I.sales_uom'
+				if uom:
+					uom_field = frappe.db.escape(uom)
+
 				uom_conversion_factor = frappe.db.sql(
 					"""select	C.conversion_factor
 					from `tabUOM Conversion Detail` C
-					inner join `tabItem` I on C.parent = I.name and C.uom = I.sales_uom
-					where I.name = %s""",
+					inner join `tabItem` I on C.parent = I.name and C.uom = {0}
+					where I.name = %s""".format(uom_field),
 					item_code,
 				)
 
 				uom_conversion_factor = uom_conversion_factor[0][0] if uom_conversion_factor else 1
+
+				price_obj["price_list_rate_sales_uom"] = price_obj["price_list_rate"] * uom_conversion_factor
+
 				price_obj["formatted_price_sales_uom"] = fmt_money(
-					price_obj["price_list_rate"] * uom_conversion_factor, currency=price_obj["currency"]
+					price_obj["price_list_rate_sales_uom"], currency=price_obj["currency"]
 				)
 
 				if not price_obj["price_list_rate"]:

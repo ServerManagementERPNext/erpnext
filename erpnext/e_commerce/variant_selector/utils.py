@@ -208,7 +208,7 @@ def get_item_attributes(item_code):
 	return attributes
 
 
-def get_item_variant_price_dict(item_code, cart_settings):
+def get_item_variant_price_dict(item_code, cart_settings, uom=None):
 	if cart_settings.enabled and cart_settings.show_price:
 		is_guest = frappe.session.user == "Guest"
 		# Show Price if logged in.
@@ -216,8 +216,13 @@ def get_item_variant_price_dict(item_code, cart_settings):
 		if not is_guest or not cart_settings.hide_price_for_guest:
 			price_list = _set_price_list(cart_settings, None)
 			price = get_price(
-				item_code, price_list, cart_settings.default_customer_group, cart_settings.company
+				item_code, price_list, cart_settings.default_customer_group, cart_settings.company, uom=uom
 			)
-			return {"price": price}
+
+			return {
+				"price": price,
+				"item_name": frappe.get_cached_value("Item", item_code, "item_name"),
+				"description": frappe.get_cached_value("Item", item_code, "description"),
+			}
 
 	return None
