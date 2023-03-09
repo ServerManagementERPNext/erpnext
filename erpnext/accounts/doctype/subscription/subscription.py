@@ -609,7 +609,7 @@ class Subscription(Document):
 		"""
 		current_invoice = self.get_current_invoice()
 		if not current_invoice:
-			frappe.throw(_("Current invoice {0} is missing").format(current_invoice.invoice))
+			frappe.throw(_("Current invoice is missing"))
 		else:
 			if not self.has_outstanding_invoice():
 				self.status = "Active"

@@ -16,6 +16,7 @@
   "column_break_7",
   "cost",
   "price_list",
+  "uom",
   "section_break_11",
   "billing_interval",
   "column_break_13",
@@ -145,10 +146,17 @@
    "fieldname": "product_price_id",
    "fieldtype": "Data",
    "label": "Product Price ID"
+  },
+  {
+   "depends_on": "eval:doc.price_determination==\"Based On Price List\"",
+   "fieldname": "uom",
+   "fieldtype": "Link",
+   "label": "UOM",
+   "options": "UOM"
   }
  ],
  "links": [],
- "modified": "2023-01-14 14:01:23.771051",
+ "modified": "2023-03-09 16:39:30.926068",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Subscription Plan",
